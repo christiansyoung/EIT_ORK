@@ -6,10 +6,6 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 
 from utils import ReverseProxied
 
-
-# ID on the active window from the database
-ACTIVE_WINDOW = 1
-
 app = Flask('webservice')
 
 # Load default config and override config from an environment variable
@@ -74,8 +70,19 @@ def index():
     return render_template('status.html', test='Testvariael!') 
 
 
-@app.route('/configuration')
+@app.route('/configuration', methods=['GET', 'POST'])
 def configuration():
+    if request.method == 'POST':
+        db = get_db()
+	window_width = request.form['windowWidth']
+	window_height = request.form['windowHeight']
+	room_area = request.form['roomArea']
+	window_direction = request.form['windowDirection']
+	room_draft = request.form['roomDraft']
+	window_hinge = request.form['windowHinge']
+	db.execute('UPDATE configuration SET width=?, height=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, window_direction, room_draft, 1])
+	db.commit()
+	flash('Updated')
     return render_template('configuration.html')
 
 
