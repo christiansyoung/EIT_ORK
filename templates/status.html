@@ -27,19 +27,74 @@
 			</div>
 		</div>
 		<div class="row">
+			<div class="col-xs-12 clearfix">
+				<p class="lead pull-left">Your window is closed.</p>
+				<a href="#" class="btn btn-success pull-right">Open</a>
+			</div>
+		</div>
+		<div class="row">
 			<div class="col-md-12">
 				<div class="page-header">
 					<h3>Timer</h3>
 				</div>
 			</div>
 		</div>
-		<div class="row">
-			<div class="col-md-6">
-
+		<form role="form" action="#" method="post">
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="hours">Hours</label>
+						<select id="hours" class="form-control">
+						</select>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="minutes">Minutes</label>
+						<select id="minutes" class="form-control">
+						</select>
+					</div>
+				</div>
 			</div>
-			<div class="col-md-6">
-				
+			<div class="row">
+				<div class="col-md-12">
+					<input type="submit" class="btn btn-primary" value="Set timer" />
+				</div>
+			</div>
+		</form>
+		<div class="row">
+			<div class="col-md-12">
+				<div class="page-header">
+					<h3>Mode</h3>
+				</div>
 			</div>
 		</div>
+		<div class="row" style="margin-bottom:30px;">
+			<div class="col-md-12">
+				<p class="lead">You are currently in <b>Auto Mode</b></p>
+				<a href="#" class="btn btn-danger">Switch to manual</a>
+			</div>
+		</div>
+
 	</div>
+	<script>
+		$(function () {
+
+			// Generate 12 hour option boxes
+			for(var h=1; h < 13; h++) {
+				var option = document.createElement('option');
+		        option.setAttribute('value', h);
+		        option.appendChild(document.createTextNode(h + 'h'));
+				$('#hours').append(option);
+			}
+
+			// Generate 60 minutes option boxes
+			for(var m=1; m < 60; m++) {
+				var option = document.createElement('option');
+		        option.setAttribute('value', m);
+		        option.appendChild(document.createTextNode(m));
+				$('#minutes').append(option);
+			}
+		});
+	</script>
 {% endblock %}
