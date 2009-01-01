@@ -70,6 +70,11 @@ def index():
     return render_template('status.html', test='Testvariael!') 
 
 
+@app.route('/configuration')
+def configuration():
+    return render_template('configuration.html')
+
+
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 if __name__ == '__main__':
