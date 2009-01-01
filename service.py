@@ -1,10 +1,11 @@
 import os
 import sqlite3
-
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash
-
+     render_template, flash, jsonify
 from utils import ReverseProxied
+
+# ID on the active window from the database
+ACTIVE_WINDOW = 1
 
 app = Flask('webservice')
 
@@ -58,6 +59,19 @@ def query_db(query, args=(), one=False):
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+def get_latest_sensor_data():
+    row = query_db("select * from sensordata order by id desc limit 1;", one=True)
+
+    return {
+        u'pressure': row['preasure'],
+        u'temp': row['temperature'],
+        u'wind':
+            {
+                u'speed': row['wind_speed'],
+                u'angle': row['wind_angle']
+            },
+        u'humidity': row['humidity']
+    }
 
 @app.route('/')
 def index():
@@ -67,8 +81,22 @@ def index():
     #db.commit()
     flash('Yo, this is the shit.')
 
-    return render_template('status.html', test='Testvariael!') 
+    return render_template('status.html', **get_latest_sensor_data())
 
+@app.route('/api/weather_sensor_data', methods=['POST'])
+def post_sensor_data():
+    weather = request.get_json()
+
+    db = get_db()
+    db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
+               'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
+    db.commit()
+
+    return jsonify({'ok': True})
+
+@app.route('/api/weather_data', methods=['get'])
+def weather_data():
+    return jsonify(get_latest_sensor_data())
 
 @app.route('/configuration', methods=['GET', 'POST'])
 def configuration():
