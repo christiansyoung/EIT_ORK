@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-app = Flask(__name__)
+app = Flask('webservice')
 
 @app.route('/')
 def hello_world():
