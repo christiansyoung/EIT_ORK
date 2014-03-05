@@ -70,7 +70,16 @@ def index():
 
     return render_template('status.html', **{u'pressure': 1000, u'temp': 11, u'wind': {u'speed': 14, u'angle': 263}, u'humidity': 56})
 
+@app.route('/api/weather_sensor_data', methods=['POST'])
+def post_sensor_data():
+    weather = request.get_json()
 
+    db = get_db()
+    db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
+               'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
+    db.commit()
+
+    return jsonify({'ok': True})
 
 @app.route('/api/weather_data', methods=['get'])
 def weather_data():
