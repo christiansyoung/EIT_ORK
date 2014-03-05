@@ -1,6 +1,5 @@
 CREATE TABLE configuration (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-window_id INT NOT NULL,
+window_id INT PRIMARY KEY NOT NULL,
 name TEXT NOT NULL,
 width INT NOT NULL,
 height INT NOT NULL,
@@ -9,17 +8,31 @@ enginepower INT NOT NULL,
 draftthreshold INT NOT NULL);
 
 CREATE TABLE sensordata (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-window_id INT NOT NULL,
+window_id INT PRIMARY KEY NOT NULL,
 wind_angle INT,
 wind_speed INT,
 temperature INT,
 preasure INT,
-humidity INT);
+humidity INT
+time_stamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE window (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 name TEXT NOT NULL
+);
+
+CREATE TABLE state (
+window_id INT PRIMARY KEY NOT NULL,
+open BOOLEAN,
+auto BOOLEAN,
+timer_id INT
+);
+
+CREATE TABLE timer (
+id INT PRIMARY KEY AUTOINCREMENT,
+window_id INT NOT NULL,
+hour INT NOT NULL,
+minute INT NOT NULL
 );
 
 INSERT INTO window (name) VALUES ('Window 1');
