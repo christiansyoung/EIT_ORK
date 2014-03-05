@@ -6,6 +6,10 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 
 from utils import ReverseProxied
 
+
+# ID on the active window from the database
+ACTIVE_WINDOW = 1
+
 app = Flask('webservice')
 
 # Load default config and override config from an environment variable
