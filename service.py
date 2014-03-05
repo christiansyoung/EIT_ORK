@@ -59,6 +59,19 @@ def query_db(query, args=(), one=False):
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+def get_latest_sensor_data():
+    row = query_db("select * from sensordata order by id desc limit 1;", one=True)
+
+    return {
+        u'pressure': row['preasure'],
+        u'temp': row['temperature'],
+        u'wind':
+            {
+                u'speed': row['wind_speed'],
+                u'angle': row['wind_angle']
+            },
+        u'humidity': row['humidity']
+    }
 
 @app.route('/')
 def index():
@@ -68,7 +81,7 @@ def index():
     #db.commit()
     flash('Yo, this is the shit.')
 
-    return render_template('status.html', **{u'pressure': 1000, u'temp': 11, u'wind': {u'speed': 14, u'angle': 263}, u'humidity': 56})
+    return render_template('status.html', **get_latest_sensor_data())
 
 @app.route('/api/weather_sensor_data', methods=['POST'])
 def post_sensor_data():
@@ -83,7 +96,7 @@ def post_sensor_data():
 
 @app.route('/api/weather_data', methods=['get'])
 def weather_data():
-    return jsonify({u'pressure': 1000, u'temp': 11, u'wind': {u'speed': 14, u'angle': 263}, u'humidity': 56})
+    return jsonify(get_latest_sensor_data())
 
 @app.route('/configuration')
 def configuration():
