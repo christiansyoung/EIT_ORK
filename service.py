@@ -67,7 +67,7 @@ def index():
     #db.commit()
     flash('Yo, this is the shit.')
 
-    return render_template('base.html', test='Testvariael!') 
+    return render_template('status.html', test='Testvariael!') 
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
