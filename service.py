@@ -1,11 +1,8 @@
 import os
 import sqlite3
-
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash
-
+     render_template, flash, jsonify
 from utils import ReverseProxied
-
 
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
@@ -71,8 +68,13 @@ def index():
     #db.commit()
     flash('Yo, this is the shit.')
 
-    return render_template('status.html', test='Testvariael!') 
+    return render_template('status.html', **{u'pressure': 1000, u'temp': 11, u'wind': {u'speed': 14, u'angle': 263}, u'humidity': 56})
 
+
+
+@app.route('/api/weather_data', methods=['get'])
+def weather_data():
+    return jsonify({u'pressure': 1000, u'temp': 11, u'wind': {u'speed': 14, u'angle': 263}, u'humidity': 56})
 
 @app.route('/configuration')
 def configuration():
