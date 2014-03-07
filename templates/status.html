@@ -28,8 +28,13 @@
 		</div>
 		<div class="row">
 			<div class="col-xs-12 clearfix">
-				<p class="lead pull-left">Your window is closed.</p>
-				<a href="#" class="btn btn-success pull-right">Open</a>
+				{% if state.open %}
+					<p class="lead pull-left">Your window is open.</p>
+					<a href="/api/open-close/" class="btn btn-danger pull-right">Close</a>
+				{% else %}
+					<p class="lead pull-left">Your window is closed.</p>
+					<a href="/api/open-close" class="btn btn-success pull-right">Open</a>
+				{% endif %}
 			</div>
 		</div>
 		<div class="row">
