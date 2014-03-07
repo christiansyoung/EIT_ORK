@@ -92,9 +92,33 @@ def index():
         db.commit()
 
         flash('The timer was set!')
-        return render_template('status.html', altert='succcess')
+        return render_template('status.html', alert='success')
 
-    return render_template('status.html') 
+    return render_template('status.html')
+
+
+@app.route('/api/mode/')
+def mode(mode):
+    db = get_db()
+
+    # Find the mode we are switching to and produces messages there after    
+    auto = True
+    flash_text = 'You are now in auto mode'
+    alert = 'success'
+
+    if mode == 'manual':
+        auto = False
+        flash_text = 'Warning! You are now in manual mode.'
+        alert = 'warning'
+
+    # TODO CHECK THRESH HERE. If it is dangerous, we must inform the user.
+
+    db.execute('UPDATE state SET auto=? WHERE window_id=?', [auto, ACTIVE_WINDOW])
+    db.commit
+
+    flash(flash_text)
+
+    return render_template('status.html' alert=alert)
 
 
 @app.route('/configuration')
