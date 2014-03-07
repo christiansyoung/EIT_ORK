@@ -121,7 +121,32 @@ def mode(mode):
 
     flash(flash_text)
 
-    return render_template('status.html' alert=alert)
+    return render_template('status.html', alert=alert)
+
+@app.route('/api/open-close')
+def open_close():
+    window_open = False
+    flash_text = 'Your window is now closed.'
+
+    # Get the state and check whether the window is open or closed
+    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+    if state is None:
+        flash('Serious error')
+        return render_template('status.html', alert='danger')
+
+    # If it is now closed, open it.
+    if state['open'] == False:
+        window_open = True
+        flash_text = 'Your window is now open.'
+
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
+    db.commit()
+
+    # OPEN WINDOW WITH MOTOR HERE
+
+    flash(flash_text)
+    return render_template('status.html', alert='success')
 
 
 @app.route('/configuration')
