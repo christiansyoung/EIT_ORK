@@ -94,7 +94,10 @@ def index():
         flash('The timer was set!')
         return render_template('status.html', alert='success')
 
-    return render_template('status.html')
+    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+
+
+    return render_template('status.html', state=state)
 
 
 @app.route('/api/mode/')

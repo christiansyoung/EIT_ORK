@@ -71,8 +71,13 @@
 		</div>
 		<div class="row" style="margin-bottom:30px;">
 			<div class="col-md-12">
-				<p class="lead">You are currently in <b>Auto Mode</b></p>
-				<a href="#" class="btn btn-danger">Switch to manual</a>
+				{% if state.auto %}
+					<p class="lead">You are currently in <b>Auto Mode</b></p>
+					<a href="/api/mode/manual" class="btn btn-danger">Switch to manual</a>
+				{% else %}
+					<p class="lead">You are currently in <b>Manual Mode</b></p>
+					<a href="/api/mode/auto" class="btn btn-danger">Switch to auto</a>
+				{% endif %}
 			</div>
 		</div>
 
