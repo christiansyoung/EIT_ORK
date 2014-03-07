@@ -66,12 +66,35 @@ def query_db(query, args=(), one=False):
 @app.route('/')
 def index():
     db = get_db()
-    #db.execute('INSERT INTO sensordata (wind_angle, wind_power, rain) VALUES (?,?,?)',
-    #    [22,33,True])
-    #db.commit()
-    flash('Yo, this is the shit.')
+    
+    # If this is a timer call
+    if request.method == 'POST':
 
-    return render_template('status.html', test='Testvariael!') 
+        # POST parameters to variables
+        hours = request.POST.get('hours')
+        minutes = request.POST.get('minutes')
+
+        # Make a new timer object
+        db.execute('INSERT INTO timer (window_id, hour, minute) VALUES (?,?,?)', [ACTIVE_WINDOW, hours, minutes])
+        db.commit()
+
+        # Get the object we just created
+        timer = query_db('SELECT id FROM timer order by id DESC', one=True)
+
+        # If that does not exist, something is wrong
+        if timer is None:
+            flash('Something went wrong')
+            return render_template('status.html', alert='danger')
+
+        # Set the timer in the state
+        timer_id = timer['id']    
+        db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
+        db.commit()
+
+        flash('The timer was set!')
+        return render_template('status.html', altert='succcess')
+
+    return render_template('status.html') 
 
 
 @app.route('/configuration')
