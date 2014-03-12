@@ -3,6 +3,7 @@ import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
 from utils import ReverseProxied
+import datetime
 
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
@@ -75,19 +76,21 @@ def get_latest_sensor_data():
     }
 
 
-@app.route('/')
+@app.route('/', methods=['POST','GET'])
 def index():
     db = get_db()
-    
+
+    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
     if request.method == 'POST':
-
         # POST parameters to variables
-        hours = request.POST.get('hours')
-        minutes = request.POST.get('minutes')
+        hours = request.form['hours']
+        minutes = request.form['minutes']
+        timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
+        print "asd"
         # Make a new timer object
-        db.execute('INSERT INTO timer (window_id, hour, minute) VALUES (?,?,?)', [ACTIVE_WINDOW, hours, minutes])
+        db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
         db.commit()
 
         # Get the object we just created
@@ -99,14 +102,13 @@ def index():
             return render_template('status.html', alert='danger')
 
         # Set the timer in the state
-        timer_id = timer['id']    
+        timer_id = timer['id']
         db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
         db.commit()
 
         flash('The timer was set!')
-        return render_template('status.html', alert='success')
+        return render_template('status.html', alert='success', state=state, **get_latest_sensor_data())
 
-    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
 
     return render_template('status.html', state=state, **get_latest_sensor_data())
