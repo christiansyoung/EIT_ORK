@@ -1,11 +1,8 @@
 import os
 import sqlite3
-
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash
-
+     render_template, flash, jsonify
 from utils import ReverseProxied
-
 
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
@@ -63,6 +60,21 @@ def query_db(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 
+def get_latest_sensor_data():
+    row = query_db("select * from sensordata order by id desc limit 1;", one=True)
+
+    return {
+        u'pressure': row['preasure'],
+        u'temp': row['temperature'],
+        u'wind':
+            {
+                u'speed': row['wind_speed'],
+                u'angle': row['wind_angle']
+            },
+        u'humidity': row['humidity']
+    }
+
+
 @app.route('/')
 def index():
     db = get_db()
@@ -97,7 +109,7 @@ def index():
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
 
-    return render_template('status.html', state=state)
+    return render_template('status.html', state=state, **get_latest_sensor_data())
 
 
 @app.route('/api/mode/')
@@ -122,6 +134,7 @@ def mode(mode):
     flash(flash_text)
 
     return render_template('status.html', alert=alert)
+
 
 @app.route('/api/open-close')
 def open_close():
@@ -149,8 +162,36 @@ def open_close():
     return render_template('status.html', alert='success')
 
 
-@app.route('/configuration')
+@app.route('/api/weather_sensor_data', methods=['POST'])
+def post_sensor_data():
+    weather = request.get_json()
+
+    db = get_db()
+    db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
+               'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
+    db.commit()
+
+    return jsonify({'ok': True})
+
+
+@app.route('/api/weather_data', methods=['get'])
+def weather_data():
+    return jsonify(get_latest_sensor_data())
+
+
+@app.route('/configuration', methods=['GET', 'POST'])
 def configuration():
+    if request.method == 'POST':
+        db = get_db()
+	window_width = request.form['windowWidth']
+	window_height = request.form['windowHeight']
+	room_area = request.form['roomArea']
+	window_direction = request.form['windowDirection']
+	room_draft = request.form['roomDraft']
+	window_hinge = request.form['windowHinge']
+	db.execute('UPDATE configuration SET width=?, height=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, window_direction, room_draft, 1])
+	db.commit()
+	flash('Updated')
     return render_template('configuration.html')
 
 
