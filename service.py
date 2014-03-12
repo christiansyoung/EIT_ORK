@@ -136,8 +136,6 @@ def mode(mode):
 
 @app.route('/api/open-close/')
 def open_close():
-    window_open = False
-    flash_text = 'Your window is now closed.'
 
     # Get the state and check whether the window is open or closed
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
@@ -149,6 +147,11 @@ def open_close():
     if not state['open']:
         window_open = True
         flash_text = 'Your window is now open.'
+        os.system('python window_motor.py open')
+    else:
+        window_open = False
+        flash_text = 'Your window is now closed.'
+        os.system('python window_motor.py close')
 
     db = get_db()
     db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
