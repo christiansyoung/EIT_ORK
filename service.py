@@ -98,7 +98,7 @@ def index():
         # If that does not exist, something is wrong
         if timer is None:
             flash('Something went wrong')
-            return render_template('status.html', alert='danger')
+            return render_template('status.html', alert='danger', state=state, **get_latest_sensor_data())
 
         # Set the timer in the state
         timer_id = timer['id']
@@ -106,14 +106,11 @@ def index():
         db.commit()
 
         flash('The timer was set!')
-        return render_template('status.html', alert='success', state=state, **get_latest_sensor_data())
-
-
 
     return render_template('status.html', state=state, **get_latest_sensor_data())
 
 
-@app.route('/api/mode/')
+@app.route('/api/mode/<mode>')
 def mode(mode):
     db = get_db()
 
@@ -130,14 +127,14 @@ def mode(mode):
     # TODO CHECK THRESH HERE. If it is dangerous, we must inform the user.
 
     db.execute('UPDATE state SET auto=? WHERE window_id=?', [auto, ACTIVE_WINDOW])
-    db.commit
+    db.commit()
 
     flash(flash_text)
 
-    return render_template('status.html', alert=alert)
+    return redirect(url_for('index'))
 
 
-@app.route('/api/open-close')
+@app.route('/api/open-close/')
 def open_close():
     window_open = False
     flash_text = 'Your window is now closed.'
@@ -149,7 +146,7 @@ def open_close():
         return render_template('status.html', alert='danger')
 
     # If it is now closed, open it.
-    if state['open'] == False:
+    if not state['open']:
         window_open = True
         flash_text = 'Your window is now open.'
 
@@ -160,7 +157,7 @@ def open_close():
     # OPEN WINDOW WITH MOTOR HERE
 
     flash(flash_text)
-    return render_template('status.html', alert='success')
+    return redirect(url_for('index'))
 
 
 @app.route('/api/weather_sensor_data', methods=['POST'])
