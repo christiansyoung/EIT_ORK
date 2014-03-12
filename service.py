@@ -61,7 +61,7 @@ def query_db(query, args=(), one=False):
 
 
 def get_latest_sensor_data():
-    row = query_db("select * from sensordata order by id desc limit 1;", one=True)
+    row = query_db("select * from sensordata order by timestamp desc limit 1;", one=True)
 
     return {
         u'pressure': row['preasure'],
