@@ -19,7 +19,7 @@
 								<ul>
 									<li>Temp: <span id="temp">{{temp}}</span>&deg;C</li>
                                     <li>Humidity: <span id="humidity">{{humidity}}</span>%</li>
-                                    <li>Wind: <span id="wind-speed">{{wind.speed}}</span> m/s (<span id="wind-deg">{{wind.deg}}</span>&deg;)</li>
+                                    <li>Wind: <span id="wind-speed">{{wind.speed}}</span> m/s (<span id="wind-deg">{{wind.angle}}</span>&deg;)</li>
 								</ul>
 							</div>
 						</div>
@@ -102,7 +102,7 @@
                 $("#temp").html(windData.temp);
                 $("#humidity").html(windData.humidity);
                 $("#wind-speed").html(windData.wind.speed);
-                $("#wind-deg").html(windData.wind.deg);
+                $("#wind-deg").html(windData.wind.angle);
             });
         }, 1000)
     </script>
