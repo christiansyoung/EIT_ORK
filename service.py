@@ -183,16 +183,30 @@ def weather_data():
 def configuration():
     if request.method == 'POST':
         db = get_db()
-	window_width = request.form['windowWidth']
-	window_height = request.form['windowHeight']
-	room_area = request.form['roomArea']
-	window_direction = request.form['windowDirection']
-	room_draft = request.form['roomDraft']
-	window_hinge = request.form['windowHinge']
-	db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
-	db.commit()
-	flash('Updated')
-    return render_template('configuration.html')
+        window_width = request.form['windowWidth']
+        window_height = request.form['windowHeight']
+        room_area = request.form['roomArea']
+        window_direction = request.form['windowDirection']
+        room_draft = request.form['roomDraft']
+        window_hinge = request.form['windowHinge']
+        db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
+        db.commit()
+        flash_text = 'Configuration updated'
+        flash(flash_text)
+    db = get_db()
+    config = query_db('SELECT * FROM configuration WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+    if config is None:
+        flash_text='No configuration set'
+        flash(flash_text)
+        return render_template('configuration.html')
+    else:
+        window_width = config['width']
+        window_height = config['height']
+        room_area = config['area']
+        window_hinge = config['hinge']
+        window_direction = config['angle']
+        room_draft = config['draftthreshold']
+        return render_template('configuration.html', width=window_width, height=window_height, area=room_area, angle=window_direction, draft=room_draft, hinge=window_hinge)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
