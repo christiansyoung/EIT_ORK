@@ -88,7 +88,6 @@ def index():
         minutes = request.form['minutes']
         timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
-        print "asd"
         # Make a new timer object
         db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
         db.commit()
