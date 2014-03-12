@@ -36,8 +36,7 @@ timer_id INT
 CREATE TABLE timer (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 window_id INT NOT NULL,
-hour INT NOT NULL,
-minute INT NOT NULL
+timestamp TIMESTAMP NOT NULL
 );
 
 INSERT INTO window (name) VALUES ('Window 1');
