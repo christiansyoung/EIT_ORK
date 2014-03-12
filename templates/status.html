@@ -92,18 +92,18 @@
 		$(function () {
 
 			// Generate 12 hour option boxes
-			for(var h=1; h < 13; h++) {
+			for(var h=0; h < 13; h++) {
 				var option = document.createElement('option');
 		        option.setAttribute('value', h);
-		        option.appendChild(document.createTextNode(h + 'h'));
+		        option.appendChild(document.createTextNode(h + ' hours'));
 				$('#hours').append(option);
 			}
 
 			// Generate 60 minutes option boxes
-			for(var m=1; m < 60; m++) {
+			for(var m=0; m < 60; m+=5) {
 				var option = document.createElement('option');
 		        option.setAttribute('value', m);
-		        option.appendChild(document.createTextNode(m));
+		        option.appendChild(document.createTextNode(m + ' minutes'));
 				$('#minutes').append(option);
 			}
 		});
