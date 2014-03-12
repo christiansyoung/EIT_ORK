@@ -189,7 +189,7 @@ def configuration():
 	window_direction = request.form['windowDirection']
 	room_draft = request.form['roomDraft']
 	window_hinge = request.form['windowHinge']
-	db.execute('UPDATE configuration SET width=?, height=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, window_direction, room_draft, 1])
+	db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
 	db.commit()
 	flash('Updated')
     return render_template('configuration.html')
