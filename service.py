@@ -10,6 +10,8 @@ from forms import LoginForm, ConfigForm
 from utils import ReverseProxied
 from models import User
 
+import formulas
+
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
 
@@ -233,11 +235,39 @@ def open_close():
         flash(e.message, "danger")
     return redirect(url_for('index'))
 
+def close_window_if_needed(weather):
+    state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
+
+    if not state['open']:
+        return
+
+    config = query_db("select * from configuration where window_id=?", [ACTIVE_WINDOW], one=True)
+    args = dict(
+        wind_speed=weather['wind']['speed'],
+        width=config['width'],
+        height=config['height'],
+        wind_direction=weather['wind']['angle'],
+        window_angle=config['angle'],
+        window_opening_angle=45,
+        motor_torsion=config['enginepower'],
+        left_hinge=config['hinge'] == 1
+    )
+    if formulas.must_close_window(**args) or formulas.room_wind_speed(**args) > config['draftthreshold']:
+        close_window()
+    if state['timestamp']:
+        if datetime.datetime.strptime(state['timestamp'], "%Y-%m-%d %H:%M:%S.%f") < datetime.datetime.now():
+            close_window()
+            db = get_db()
+            db.execute("UPDATE state SET timer_id=NULL where window_id=?;",[ACTIVE_WINDOW])
+            db.commit()
+
 
 MAX_SENSORDATA_ROWS = 100
 @app.route('/api/weather_sensor_data', methods=['POST'])
 def post_sensor_data():
     weather = request.get_json()
+
+    close_window_if_needed(weather)
 
     db = get_db()
     count = query_db("select count(*) from sensordata", one=True)['count(*)']
@@ -246,7 +276,13 @@ def post_sensor_data():
         db.execute("DELETE FROM sensordata WHERE timestamp IN "
                    "(SELECT timestamp FROM sensordata ORDER BY timestamp LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
     db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
-               'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
+               'VALUES (?,?,?,?,?,?)',[
+                   ACTIVE_WINDOW, 
+                   weather['wind']['angle'], 
+                   weather['wind']['speed'], 
+                   weather['temp'], 
+                   weather['pressure'], 
+                   weather['humidity']])
     db.commit()
 
     return jsonify({'ok': True})
@@ -260,39 +296,37 @@ def weather_data():
 @app.route('/configuration', methods=['GET', 'POST'])
 @login_required
 def configuration():
-    if request.method == 'POST':
-        db = get_db()
-        form = ConfigForm()
-        if form.validate_on_submit():
-            window_width = form.window_width.data
-            window_height = form.window_height.data
-            room_area = form.area.data
-            window_direction = form.window_direction.data
-            room_draft = form.draft.data
-            window_hinge = form.window_hinge.data
-            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
-            db.commit()
-            flash_text = 'Configuration updated'
-            flash(flash_text, 'success')
-        else:
-            flash_text='Invalid input'
-            flash(flash_text, 'danger')
+    form = ConfigForm()
     db = get_db()
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[
+                form.window_width.data, 
+                form.window_height.data, 
+                form.area.data, 
+                form.window_hinge.data, 
+                form.window_direction.data, 
+                form.draft.data, 
+                ACTIVE_WINDOW])
+            db.commit()
+            flash('Configuration updated', 'success')
+        else:
+            flash('Invalid input', 'danger')
+
     config = query_db('SELECT * FROM configuration WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if config is None:
-        flash_text='No configuration set'
-        flash(flash_text, 'danger')
-        form = ConfigForm()
+        flash('No configuration set', 'danger')
         return render_template('configuration.html', form=form)
-    else:
-        window_width_db = config['width']
-        window_height_db = config['height']
-        room_area_db = config['area']
-        window_hinge_db = config['hinge']
-        window_direction_db = config['angle']
-        room_draft_db = config['draftthreshold']
-        form = ConfigForm(window_width=window_width_db, window_height=window_height_db, area=room_area_db, window_direction=window_direction_db, draft=room_draft_db, window_hinge=window_hinge_db)
-        return render_template('configuration.html', form = form)
+
+    form = ConfigForm(
+        window_width=config['width'], 
+        window_height=config['height'], 
+        area=config['area'], 
+        window_direction=config['angle'], 
+        draft=config['draftthreshold'], 
+        window_hinge=config['hinge'])
+    return render_template('configuration.html', form = form)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
