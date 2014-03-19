@@ -92,39 +92,52 @@ def load_user(userid):
     return User.get(userid)
 
 
-@app.route('/', methods=['POST','GET'])
-@login_required
+@app.route('/', methods=['GET'])
 def index():
-    db = get_db()
-
-    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+    state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
-    if request.method == 'POST':
-        # POST parameters to variables
-        hours = request.form['hours']
-        minutes = request.form['minutes']
-        timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
-        # Make a new timer object
-        db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
-        db.commit()
+    if state['timestamp']:
+        # converting timestamp to HH:MM
+        time = state['timestamp'].split()[1].split(".")[0]
+    return render_template('status.html', state=state, time=time, **get_latest_sensor_data())
 
-        # Get the object we just created
-        timer = query_db('SELECT id FROM timer order by id DESC', one=True)
 
-        # If that does not exist, something is wrong
-        if timer is None:
-            flash('Something went wrong', 'danger')
-            return render_template('status.html', state=state, **get_latest_sensor_data())
+@app.route('/api/set-timer/', methods=['POST'])
+def set_timer():
+    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
-        # Set the timer in the state
-        timer_id = timer['id']
-        db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
-        db.commit()
+    db = get_db()
+    # POST parameters to variables
+    hours = request.form['hours']
+    minutes = request.form['minutes']
+    timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
+    # Make a new timer object
+    db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
+    db.commit()
+
+    # Get the object we just created
+    timer = query_db('SELECT id FROM timer order by id DESC', one=True)
+
+    # If that does not exist, something is wrong
+    if timer is None:
+        flash('Something went wrong', 'danger')
+        return render_template('status.html', state=state, **get_latest_sensor_data())
+
+    # Set the timer in the state
+    timer_id = timer['id']
+    db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
+    db.commit()
+
+    try:
+        if not state['open']:
+            open_window()
         flash('The timer was set.', 'success')
+    except Exception as e:
+        flash(e.message, "danger")
 
-    return render_template('status.html', state=state, **get_latest_sensor_data())
+    return redirect(url_for('index'))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -177,10 +190,27 @@ def mode(mode):
     return redirect(url_for('index'))
 
 
+def open_window():
+    code = os.system('python window_motor.py open')
+    if code != 0:
+        raise Exception('Your window could not be opened. (%s)' % code)
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [True, ACTIVE_WINDOW])
+    db.commit()
+
+
+def close_window():
+    code = os.system('python window_motor.py close')
+    if code != 0:
+        raise Exception('Your window could not be closed. (%s)' % code)
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [False, ACTIVE_WINDOW])
+    db.commit()
+
+
 @app.route('/api/open-close/')
 @login_required
 def open_close():
-
     # Get the state and check whether the window is open or closed
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if state is None:
@@ -188,31 +218,17 @@ def open_close():
         return render_template('status.html', alert='danger')
 
     # If it is now closed, open it.
-    if not state['open']:
-        window_open = True
-        flash_text = 'Your window is now open.'
-        code = os.system('python window_motor.py open')
-        if code != 0:
-            flash_text = 'Your window could not be open. (%s)' % code
-            flash(flash_text, 'danger')
-            return redirect(url_for('index'))
-    else:
-        window_open = False
-        flash_text = 'Your window is now closed.'
-        code = os.system('python window_motor.py close')
-        if code != 0:
-            flash_text = 'Your window could not be closed. (%s)' % code
-            flash(flash_text, 'danger')
-            return redirect(url_for('index'))
 
-
-    db = get_db()
-    db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
-    db.commit()
-
-    # OPEN WINDOW WITH MOTOR HERE
-
-    flash(flash_text, 'success')
+    try:
+        if not state['open']:
+            open_window()
+            flash_text = 'Your window is now open.'
+        else:
+            close_window()
+            flash_text = 'Your window is now closed.'
+        flash(flash_text, 'success')
+    except Exception as e:
+        flash(e.message, "danger")
     return redirect(url_for('index'))
 
 
