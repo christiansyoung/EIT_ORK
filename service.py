@@ -233,11 +233,21 @@ def open_close():
         flash(e.message, "danger")
     return redirect(url_for('index'))
 
+def close_window_if_needed():
+    state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
+    if state['timestamp']:
+        if datetime.datetime.strptime(state['timestamp'], "%Y-%m-%d %H:%M:%S.%f") < datetime.datetime.now():
+            close_window()
+            db = get_db()
+            db.execute("UPDATE state SET timer_id=NULL where window_id=?;",[ACTIVE_WINDOW])
+            db.commit()
 
 MAX_SENSORDATA_ROWS = 100
 @app.route('/api/weather_sensor_data', methods=['POST'])
 def post_sensor_data():
     weather = request.get_json()
+
+    close_window_if_needed()
 
     db = get_db()
     count = query_db("select count(*) from sensordata", one=True)['count(*)']
