@@ -133,10 +133,25 @@ def mode(mode):
 
     return redirect(url_for('index'))
 
+def open_window():
+    os.system('python window_motor.py open')
+    code = os.system('python window.motor.py open')
+    if code != 0:
+        raise Exception('Your window could not be opened. (%s)' % code)
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [True, ACTIVE_WINDOW])
+    db.commit()
+
+def close_window():
+    code = os.system('python window.motor.py close')
+    if code != 0:
+        raise Exception('Your window could not be closed. (%s)' % code)
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [False, ACTIVE_WINDOW])
+    db.commit()
 
 @app.route('/api/open-close/')
 def open_close():
-
     # Get the state and check whether the window is open or closed
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if state is None:
@@ -144,31 +159,17 @@ def open_close():
         return render_template('status.html', alert='danger')
 
     # If it is now closed, open it.
-    if not state['open']:
-        window_open = True
-        flash_text = 'Your window is now open.'
-        code = os.system('python window_motor.py open')
-        if code != 0:
-            flash_text = 'Your window could not be open. (%s)' % code
-            flash(flash_text, 'danger')
-            return redirect(url_for('index'))
-    else:
-        window_open = False
-        flash_text = 'Your window is now closed.'
-        code = os.system('python window_motor.py close')
-        if code != 0:
-            flash_text = 'Your window could not be closed. (%s)' % code
-            flash(flash_text, 'danger')
-            return redirect(url_for('index'))
 
-
-    db = get_db()
-    db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
-    db.commit()
-
-    # OPEN WINDOW WITH MOTOR HERE
-
-    flash(flash_text, 'success')
+    try:
+        if not state['open']:
+            open_window()
+            flash_text = 'Your window is now open.'
+        else:
+            close_window()
+            flash_text = 'Your window is now closed.'
+        flash(flash_text, 'success')
+    except Exception as e:
+        flash(e.message, "danger")
     return redirect(url_for('index'))
 
 
