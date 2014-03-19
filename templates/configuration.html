@@ -4,57 +4,57 @@
 	<div class="container">
 		<form class="form-horizontal" method="post" role="form">
 		    <div class="form-group">
-			<label class="col-sm-2 control-label">Window size:</label>
-			<div class="col-sm-5">
-			    <label class="sr-only" for="windowWidth">Window Width</label>
-			    <input type="text" class="form-control" id="windowWidth" name="windowWidth" placeholder="Width" value="{{width}}">
-			</div>
-			<div class="col-sm-5">
-			    <label class="sr-only" for="windowHeight">Window Height</label>
-			    <input type="text" class="form-control" id="windowHeight" name="windowHeight" placeholder="Height" value="{{height}}">
-			</div>
+				<label class="col-sm-2 control-label">Window size</label>
+				<div class="col-sm-5">
+			    	<label class="sr-only" for="windowWidth">Window Width</label>
+			    	<input type="text" class="form-control" id="windowWidth" name="windowWidth" placeholder="Width" value="{{width}}">
+				</div>
+				<div class="col-sm-5">
+				    <label class="sr-only" for="windowHeight">Window Height</label>
+				    <input type="text" class="form-control" id="windowHeight" name="windowHeight" placeholder="Height" value="{{height}}">
+				</div>
 		    </div>
 		    <div class="form-group">
-			<label for="roomArea" class="col-sm-2 control-label">Room area:</label>
-			<div class="col-sm-10">
-			    <input type="text" class="form-control" id="roomArea" name="roomArea" placeholder="Room Area" value="{{area}}">
-			</div>
+				<label for="roomArea" class="col-sm-2 control-label">Room area</label>
+				<div class="col-sm-10">
+				    <input type="text" class="form-control" id="roomArea" name="roomArea" placeholder="Room Area" value="{{area}}">
+				</div>
 		    </div>
 		    <div class="form-group">
-			<label for="windowDirection" class="col-sm-2 control-label">Window direction:</label>
-			<div class="col-sm-10">
-			    <select class="form-control" id="windowDirection" name="windowDirection" value="{{angle}}">
-				<option value="0">North</option>
-				<option value="45">North East</option>
-				<option value="90">East</option>
-				<option value="135">South East</option>
-				<option value="180">South</option>
-				<option value="225">South West</option>
-				<option value="270">West</option>
-				<option value="315">North West</option>
-			    </select>
-			</div>
+				<label for="windowDirection" class="col-sm-2 control-label">Window direction</label>
+				<div class="col-sm-10">
+				    <select class="form-control" id="windowDirection" name="windowDirection" value="{{angle}}">
+					<option value="0">North</option>
+					<option value="45">North East</option>
+					<option value="90">East</option>
+					<option value="135">South East</option>
+					<option value="180">South</option>
+					<option value="225">South West</option>
+					<option value="270">West</option>
+					<option value="315">North West</option>
+				    </select>
+				</div>
 		    </div>
 		    <div class="form-group">
-			<label for="roomDraft" class="col-sm-2 control-label">Room draft:</label>
-			<div class="col-sm-7">
-			    <input type="text" class="form-control" id="roomDraft" name="roomDraft" placeholder="Wanted draft" value="{{draft}}">
-			</div>
-			<p class="help-block">(Recommended 0.2 m/s)</p>
+				<label for="roomDraft" class="col-sm-2 control-label">Room draft</label>
+				<div class="col-sm-7">
+				    <input type="text" class="form-control" id="roomDraft" name="roomDraft" placeholder="Wanted draft" value="{{draft}}">
+				</div>
+				<p class="help-block">(Recommended 0.2 m/s)</p>
 		    </div>
 		    <div class="form-group">
-			<label for="windowHinge" class="col-sm-2 control-label">Window hinge:</label>
-			<div class="col-sm-10">
-			    <select class="form-control" id="windowHinge" name="windowHinge" value=""{{hinge}}>
-				<option value="1">Left</option>
-				<option value="2">Right</option>
-			    </select>
-			</div>
-		    </div><div class="form-group">
-			<div class="col-sm-offset-2 col-sm-10">
-			    <button type="submit" class="btn btn-primary form-control">Save</button>
-			</div>
+				<label for="windowHinge" class="col-sm-2 control-label">Window hinge</label>
+				<div class="col-sm-10">
+				    <select class="form-control" id="windowHinge" name="windowHinge" value=""{{hinge}}>
+					<option value="1">Left</option>
+					<option value="2">Right</option>
+				    </select>
+				</div>
 		    </div>
+		    <div class="form-group">
+				<div class="col-sm-offset-2 col-sm-10">
+			    <button type="submit" class="btn btn-primary">Save configuration</button>
+			</div>
 		</form>
 	</div>
 {% endblock %}
