@@ -3,22 +3,23 @@ import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
 from utils import ReverseProxied
+from config_form import ConfigForm
 import datetime
 
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
 
 app = Flask('webservice')
+app.config.from_object('config')
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'database.db'),
+    CSRF_ENABLED = True,
     DEBUG=True,
-    SECRET_KEY='development key',
     #USERNAME='admin',
     #PASSWORD='default'
 ))
-app.config.from_object('config')
 app.config.from_envvar('FLASK_SETTINGS', silent=True)
 
 def connect_db():
@@ -182,6 +183,7 @@ def weather_data():
 
 @app.route('/configuration', methods=['GET', 'POST'])
 def configuration():
+    form = ConfigForm()
     if request.method == 'POST':
         db = get_db()
         window_width = request.form['windowWidth']
@@ -207,7 +209,7 @@ def configuration():
         window_hinge = config['hinge']
         window_direction = config['angle']
         room_draft = config['draftthreshold']
-        return render_template('configuration.html', width=window_width, height=window_height, area=room_area, angle=window_direction, draft=room_draft, hinge=window_hinge)
+        return render_template('configuration.html', form = form, height=window_height, area=room_area, angle=window_direction, draft=room_draft, hinge=window_hinge)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)

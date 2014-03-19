@@ -3,11 +3,11 @@
 {% block content %}
 	<div class="container">
 		<form class="form-horizontal" method="post" role="form">
+            {{form.hidden_tag()}}
 		    <div class="form-group">
 			<label class="col-sm-2 control-label">Window size:</label>
 			<div class="col-sm-5">
-			    <label class="sr-only" for="windowWidth">Window Width</label>
-			    <input type="text" class="form-control" id="windowWidth" name="windowWidth" placeholder="Width" value="{{width}}">
+                {{form.window_width(class="form-control")}}			    
 			</div>
 			<div class="col-sm-5">
 			    <label class="sr-only" for="windowHeight">Window Height</label>
