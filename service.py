@@ -148,11 +148,20 @@ def open_close():
     if not state['open']:
         window_open = True
         flash_text = 'Your window is now open.'
-        os.system('python window_motor.py open')
+        code = os.system('python window_motor.py open')
+        if code != 0:
+            flash_text = 'Your window could not be open. (%s)' % code
+            flash(flash_text, 'danger')
+            return redirect(url_for('index'))
     else:
         window_open = False
         flash_text = 'Your window is now closed.'
-        os.system('python window_motor.py close')
+        code = os.system('python window_motor.py close')
+        if code != 0:
+            flash_text = 'Your window could not be closed. (%s)' % code
+            flash(flash_text, 'danger')
+            return redirect(url_for('index'))
+
 
     db = get_db()
     db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
