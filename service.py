@@ -234,11 +234,17 @@ def open_close():
     return redirect(url_for('index'))
 
 
+MAX_SENSORDATA_ROWS = 100
 @app.route('/api/weather_sensor_data', methods=['POST'])
 def post_sensor_data():
     weather = request.get_json()
 
     db = get_db()
+    count = query_db("select count(*) from sensordata", one=True)['count(*)']
+    # delete rows in sensordata table if row count exceeds MAX_SENSORDATA_ROWS
+    if count >= MAX_SENSORDATA_ROWS:
+        db.execute("DELETE FROM sensordata WHERE timestamp IN "
+                   "(SELECT timestamp FROM sensordata ORDER BY timestamp LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
     db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
                'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
     db.commit()
