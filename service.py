@@ -18,7 +18,7 @@ app.config.update(dict(
     #USERNAME='admin',
     #PASSWORD='default'
 ))
-app.config.from_object('config')
+
 app.config.from_envvar('FLASK_SETTINGS', silent=True)
 
 def connect_db():
