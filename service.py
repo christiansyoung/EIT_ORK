@@ -97,61 +97,61 @@ def index():
 
         # If that does not exist, something is wrong
         if timer is None:
-            flash('Something went wrong')
-            return render_template('status.html', alert='danger')
+            flash('Something went wrong', 'danger')
+            return render_template('status.html', state=state, **get_latest_sensor_data())
 
         # Set the timer in the state
         timer_id = timer['id']
         db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
         db.commit()
 
-        flash('The timer was set!')
-        return render_template('status.html', alert='success', state=state, **get_latest_sensor_data())
-
-
+        flash('The timer was set.', 'success')
 
     return render_template('status.html', state=state, **get_latest_sensor_data())
 
 
-@app.route('/api/mode/')
+@app.route('/api/mode/<mode>')
 def mode(mode):
     db = get_db()
 
     # Find the mode we are switching to and produces messages there after    
     auto = True
-    flash_text = 'You are now in auto mode'
+    flash_text = 'You are now in auto mode.'
     alert = 'success'
 
     if mode == 'manual':
         auto = False
         flash_text = 'Warning! You are now in manual mode.'
-        alert = 'warning'
+        alert = 'danger'
 
     # TODO CHECK THRESH HERE. If it is dangerous, we must inform the user.
 
     db.execute('UPDATE state SET auto=? WHERE window_id=?', [auto, ACTIVE_WINDOW])
-    db.commit
+    db.commit()
 
-    flash(flash_text)
+    flash(flash_text, alert)
 
-    return render_template('status.html', alert=alert)
+    return redirect(url_for('index'))
 
 
-@app.route('/api/open-close')
+@app.route('/api/open-close/')
 def open_close():
-    window_open = False
-    flash_text = 'Your window is now closed.'
 
     # Get the state and check whether the window is open or closed
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if state is None:
-        flash('Serious error')
+        flash('Serious error', 'danger')
         return render_template('status.html', alert='danger')
 
     # If it is now closed, open it.
-    if state['open'] == False:
+    if not state['open']:
         window_open = True
         flash_text = 'Your window is now open.'
+        os.system('python window_motor.py open')
+    else:
+        window_open = False
+        flash_text = 'Your window is now closed.'
+        os.system('python window_motor.py close')
 
     db = get_db()
     db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
@@ -159,8 +159,8 @@ def open_close():
 
     # OPEN WINDOW WITH MOTOR HERE
 
-    flash(flash_text)
-    return render_template('status.html', alert='success')
+    flash(flash_text, 'success')
+    return redirect(url_for('index'))
 
 
 @app.route('/api/weather_sensor_data', methods=['POST'])
