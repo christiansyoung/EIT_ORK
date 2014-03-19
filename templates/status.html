@@ -34,7 +34,7 @@
 		<div class="row">
 			<div class="col-xs-12 clearfix">
 				{% if state.open %}
-					<p class="lead pull-left">Your window is open.</p>
+					<p class="lead pull-left">Your window is open (will close <b>{{time}}</b>).</p>
 					<a href="/api/open-close/" class="btn btn-danger pull-right">Close</a>
 				{% else %}
 					<p class="lead pull-left">Your window is closed.</p>

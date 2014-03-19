@@ -77,9 +77,13 @@ def get_latest_sensor_data():
 
 @app.route('/', methods=['GET'])
 def index():
-    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+    state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
-    return render_template('status.html', state=state, **get_latest_sensor_data())
+
+    if state['timestamp']:
+        # converting timestamp to HH:MM
+        time = state['timestamp'].split()[1].split(".")[0]
+    return render_template('status.html', state=state, time=time, **get_latest_sensor_data())
 
 @app.route('/api/set-timer/', methods=['POST'])
 def set_timer():
