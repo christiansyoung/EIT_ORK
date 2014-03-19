@@ -257,12 +257,12 @@ def post_sensor_data():
                    "(SELECT timestamp FROM sensordata ORDER BY timestamp LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
     db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
                'VALUES (?,?,?,?,?,?)',[
-               ACTIVE_WINDOW, 
-               weather['wind']['angle'], 
-               weather['wind']['speed'], 
-               weather['temp'], 
-               weather['pressure'], 
-               weather['humidity']])
+                   ACTIVE_WINDOW, 
+                   weather['wind']['angle'], 
+                   weather['wind']['speed'], 
+                   weather['temp'], 
+                   weather['pressure'], 
+                   weather['humidity']])
     db.commit()
 
     return jsonify({'ok': True})
