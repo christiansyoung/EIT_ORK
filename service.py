@@ -192,33 +192,40 @@ def weather_data():
 
 @app.route('/configuration', methods=['GET', 'POST'])
 def configuration():
-    form = ConfigForm()
     if request.method == 'POST':
         db = get_db()
-        window_width = request.form['windowWidth']
-        window_height = request.form['windowHeight']
-        room_area = request.form['roomArea']
-        window_direction = request.form['windowDirection']
-        room_draft = request.form['roomDraft']
-        window_hinge = request.form['windowHinge']
-        db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
-        db.commit()
-        flash_text = 'Configuration updated'
-        flash(flash_text)
+        form = ConfigForm()
+        if form.validate_on_submit():
+            window_width = form.window_width.data
+            window_height = form.window_height.data
+            room_area = form.area.data
+            window_direction = form.window_direction.data
+            room_draft = form.draft.data
+            window_hinge = form.window_hinge.data
+            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
+            db.commit()
+            flash_text = 'Configuration updated'
+            flash(flash_text, 'success')
+        else:
+            flash_text='Invalid input'
+            flash(flash_text, 'danger')
     db = get_db()
     config = query_db('SELECT * FROM configuration WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if config is None:
         flash_text='No configuration set'
-        flash(flash_text)
-        return render_template('configuration.html')
+        flash(flash_text, 'danger')
+        form = ConfigForm()
+        return render_template('configuration.html', form=form)
     else:
-        window_width = config['width']
-        window_height = config['height']
-        room_area = config['area']
-        window_hinge = config['hinge']
-        window_direction = config['angle']
-        room_draft = config['draftthreshold']
-        return render_template('configuration.html', form = form, height=window_height, area=room_area, angle=window_direction, draft=room_draft, hinge=window_hinge)
+        window_width_db = config['width']
+        window_height_db = config['height']
+        room_area_db = config['area']
+        window_hinge_db = config['hinge']
+        window_direction_db = config['angle']
+        room_draft_db = config['draftthreshold']
+        form = ConfigForm()
+       #form = ConfigForm(window_width=window_width_db, window_height=window_height_db, area=room_area_db, window_direction=window_direction_db, draft=room_draft_db, window_hinge=window_hinge_db)
+        return render_template('configuration.html', form = form)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
