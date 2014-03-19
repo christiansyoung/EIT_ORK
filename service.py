@@ -288,8 +288,9 @@ def configuration():
         window_hinge_db = config['hinge']
         window_direction_db = config['angle']
         room_draft_db = config['draftthreshold']
-    
-    return render_template('configuration.html', form=form)
+
+        form = ConfigForm(window_width=window_width_db, window_height=window_height_db, area=room_area_db, window_direction=window_direction_db, draft=room_draft_db, window_hinge=window_hinge_db)
+        return render_template('configuration.html', form = form)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
