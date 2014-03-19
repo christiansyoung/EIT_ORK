@@ -1,25 +1,36 @@
 import os
 import sqlite3
+import datetime
+
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
+from flask.ext.login import LoginManager, login_required, login_user, logout_user
+
+from forms import LoginForm
 from utils import ReverseProxied
-import datetime
+from models import User
 
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
 
 app = Flask('webservice')
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'database.db'),
     DEBUG=True,
     SECRET_KEY='development key',
-    #USERNAME='admin',
-    #PASSWORD='default'
+    USERNAME='root',
+    PASSWORD='root'
 ))
 
+WTF_CSRF_SECRET_KEY = app.config['SECRET_KEY']
 app.config.from_envvar('FLASK_SETTINGS', silent=True)
+
 
 def connect_db():
     """Connects to the specific database."""
@@ -75,7 +86,14 @@ def get_latest_sensor_data():
         u'humidity': row['humidity']
     }
 
+
+@login_manager.user_loader
+def load_user(userid):
+    return User.get(userid)
+
+
 @app.route('/', methods=['GET'])
+@login_required
 def index():
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
@@ -85,7 +103,9 @@ def index():
         time = state['timestamp'].split()[1].split(".")[0]
     return render_template('status.html', state=state, time=time, **get_latest_sensor_data())
 
+
 @app.route('/api/set-timer/', methods=['POST'])
+@login_required
 def set_timer():
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
@@ -121,7 +141,34 @@ def set_timer():
 
     return redirect(url_for('index'))
 
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if not request.form['password'] == app.config['PASSWORD'] or not request.form['name'] == app.config['USERNAME']:
+                flash('Wrong username or password', 'danger')
+            else:
+                user = User()
+                login_user(user)
+                flash('You are now logged in!', 'success')
+                return redirect(request.args.get("next") or url_for("index"))
+        else:
+            flash('CSRF validation failed.', 'danger')
+    return render_template("login.html", form=form)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash('You are now logged out.', 'success')
+    return redirect(url_for('login'))
+
+
 @app.route('/api/mode/<mode>')
+@login_required
 def mode(mode):
     db = get_db()
 
@@ -144,6 +191,7 @@ def mode(mode):
 
     return redirect(url_for('index'))
 
+
 def open_window():
     code = os.system('python window_motor.py open')
     if code != 0:
@@ -151,6 +199,7 @@ def open_window():
     db = get_db()
     db.execute('UPDATE state SET open=? WHERE window_id=?', [True, ACTIVE_WINDOW])
     db.commit()
+
 
 def close_window():
     code = os.system('python window_motor.py close')
@@ -160,7 +209,9 @@ def close_window():
     db.execute('UPDATE state SET open=? WHERE window_id=?', [False, ACTIVE_WINDOW])
     db.commit()
 
+
 @app.route('/api/open-close/')
+@login_required
 def open_close():
     # Get the state and check whether the window is open or closed
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
@@ -201,6 +252,7 @@ def weather_data():
 
 
 @app.route('/configuration', methods=['GET', 'POST'])
+@login_required
 def configuration():
     if request.method == 'POST':
         db = get_db()
@@ -233,4 +285,4 @@ def configuration():
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=app.config['DEBUG'])
