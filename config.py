@@ -1,2 +1,3 @@
-SECRET_KEY='development key',
+USERNAME='root'
+PASSWORD='root'
 SECRET_KEY = 'you-will-never-guess'

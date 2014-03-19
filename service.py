@@ -6,9 +6,8 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
 from flask.ext.login import LoginManager, login_required, login_user, logout_user
 
-from forms import LoginForm
+from forms import LoginForm, ConfigForm
 from utils import ReverseProxied
-from config_form import ConfigForm
 from models import User
 
 # ID on the active window from the database
@@ -16,6 +15,7 @@ ACTIVE_WINDOW = 1
 
 app = Flask('webservice')
 app.config.from_object('config')
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -24,12 +24,7 @@ login_manager.login_view = "login"
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'database.db'),
     CSRF_ENABLED = True,
-    DEBUG=True,
-    #USERNAME='admin',
-    #PASSWORD='default'
-    SECRET_KEY='development key',
-    USERNAME='root',
-    PASSWORD='root'
+    DEBUG=True
 ))
 
 WTF_CSRF_SECRET_KEY = app.config['SECRET_KEY']
@@ -297,7 +292,6 @@ def configuration():
         window_direction_db = config['angle']
         room_draft_db = config['draftthreshold']
         form = ConfigForm()
-       #form = ConfigForm(window_width=window_width_db, window_height=window_height_db, area=room_area_db, window_direction=window_direction_db, draft=room_draft_db, window_hinge=window_hinge_db)
         return render_template('configuration.html', form = form)
 
 
