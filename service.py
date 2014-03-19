@@ -93,6 +93,7 @@ def load_user(userid):
 
 
 @app.route('/', methods=['GET'])
+@login_required
 def index():
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
@@ -104,6 +105,7 @@ def index():
 
 
 @app.route('/api/set-timer/', methods=['POST'])
+@login_required
 def set_timer():
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
