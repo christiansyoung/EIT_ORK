@@ -147,7 +147,7 @@ def open_close():
     if not state['open']:
         window_open = True
         flash_text = 'Your window is now open.'
-        code = os.system('python window.motor.py open')
+        code = os.system('python window_motor.py open')
         if code != 0:
             flash_text = 'Your window could not be open. (%s)' % code
             flash(flash_text, 'danger')
@@ -155,7 +155,7 @@ def open_close():
     else:
         window_open = False
         flash_text = 'Your window is now closed.'
-        code = os.system('python window.motor.py close')
+        code = os.system('python window_motor.py close')
         if code != 0:
             flash_text = 'Your window could not be closed. (%s)' % code
             flash(flash_text, 'danger')
