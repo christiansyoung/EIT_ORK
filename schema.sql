@@ -40,5 +40,5 @@ timestamp TIMESTAMP NOT NULL
 );
 
 INSERT INTO window (name) VALUES ('Window 1');
-INSERT INTO configuration (window_id, area, hinge, name, width, height, angle, enginepower, draftthreshold) VALUES (1,0,1,'',0,0,0,0,0);
+INSERT INTO configuration (window_id, area, hinge, name, width, height, angle, enginepower, draftthreshold) VALUES (1,1,1,'',1,1,0,50,1);
 INSERT INTO state (window_id, open, auto, timer_id) VALUES (1,0,1,0);
