@@ -49,7 +49,7 @@
 				</div>
 			</div>
 		</div>
-		<form role="form" method="post">
+		<form role="form" action="api/set-timer/" method="post">
 			<div class="row">
 				<div class="col-md-6">
 					<div class="form-group">
@@ -68,7 +68,7 @@
 			</div>
 			<div class="row">
 				<div class="col-md-12">
-					<input type="submit" class="btn btn-primary" value="Set timer" />
+					<input type="submit" class="btn btn-primary" value="Set timer {% if not state.open %} and open window {% endif %}" />
 				</div>
 			</div>
 		</form>

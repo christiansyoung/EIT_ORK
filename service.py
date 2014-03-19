@@ -75,40 +75,47 @@ def get_latest_sensor_data():
         u'humidity': row['humidity']
     }
 
-
-@app.route('/', methods=['POST','GET'])
+@app.route('/', methods=['GET'])
 def index():
-    db = get_db()
-
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
-    if request.method == 'POST':
-        # POST parameters to variables
-        hours = request.form['hours']
-        minutes = request.form['minutes']
-        timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
-
-        # Make a new timer object
-        db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
-        db.commit()
-
-        # Get the object we just created
-        timer = query_db('SELECT id FROM timer order by id DESC', one=True)
-
-        # If that does not exist, something is wrong
-        if timer is None:
-            flash('Something went wrong', 'danger')
-            return render_template('status.html', state=state, **get_latest_sensor_data())
-
-        # Set the timer in the state
-        timer_id = timer['id']
-        db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
-        db.commit()
-
-        flash('The timer was set.', 'success')
-
     return render_template('status.html', state=state, **get_latest_sensor_data())
 
+@app.route('/api/set-timer/', methods=['POST'])
+def set_timer():
+    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+
+    db = get_db()
+    # POST parameters to variables
+    hours = request.form['hours']
+    minutes = request.form['minutes']
+    timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
+
+    # Make a new timer object
+    db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
+    db.commit()
+
+    # Get the object we just created
+    timer = query_db('SELECT id FROM timer order by id DESC', one=True)
+
+    # If that does not exist, something is wrong
+    if timer is None:
+        flash('Something went wrong', 'danger')
+        return render_template('status.html', state=state, **get_latest_sensor_data())
+
+    # Set the timer in the state
+    timer_id = timer['id']
+    db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
+    db.commit()
+
+    try:
+        if not state['open']:
+            open_window()
+        flash('The timer was set.', 'success')
+    except Exception as e:
+        flash(e.message, "danger")
+
+    return redirect(url_for('index'))
 
 @app.route('/api/mode/<mode>')
 def mode(mode):
@@ -134,8 +141,7 @@ def mode(mode):
     return redirect(url_for('index'))
 
 def open_window():
-    os.system('python window_motor.py open')
-    code = os.system('python window.motor.py open')
+    code = os.system('python window_motor.py open')
     if code != 0:
         raise Exception('Your window could not be opened. (%s)' % code)
     db = get_db()
@@ -143,7 +149,7 @@ def open_window():
     db.commit()
 
 def close_window():
-    code = os.system('python window.motor.py close')
+    code = os.system('python window_motor.py close')
     if code != 0:
         raise Exception('Your window could not be closed. (%s)' % code)
     db = get_db()
