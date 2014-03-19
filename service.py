@@ -10,6 +10,8 @@ from forms import LoginForm, ConfigForm
 from utils import ReverseProxied
 from models import User
 
+import formulas
+
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
 
@@ -233,8 +235,25 @@ def open_close():
         flash(e.message, "danger")
     return redirect(url_for('index'))
 
-def close_window_if_needed():
+def close_window_if_needed(weather):
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
+
+    if not state['open']:
+        return
+
+    config = query_db("select * from configuration where window_id=?", [ACTIVE_WINDOW], one=True)
+    args = dict(
+        wind_speed=weather['wind']['speed'],
+        width=config['width'],
+        height=config['height'],
+        wind_direction=weather['wind']['angle'],
+        window_angle=config['angle'],
+        window_opening_angle=45,
+        motor_torsion=config['enginepower'],
+        left_hinge=config['hinge'] == 1
+    )
+    if formulas.must_close_window(**args) or formulas.room_wind_speed(**args) > config['draftthreshold']:
+        close_window()
     if state['timestamp']:
         if datetime.datetime.strptime(state['timestamp'], "%Y-%m-%d %H:%M:%S.%f") < datetime.datetime.now():
             close_window()
@@ -242,12 +261,13 @@ def close_window_if_needed():
             db.execute("UPDATE state SET timer_id=NULL where window_id=?;",[ACTIVE_WINDOW])
             db.commit()
 
+
 MAX_SENSORDATA_ROWS = 100
 @app.route('/api/weather_sensor_data', methods=['POST'])
 def post_sensor_data():
     weather = request.get_json()
 
-    close_window_if_needed()
+    close_window_if_needed(weather)
 
     db = get_db()
     count = query_db("select count(*) from sensordata", one=True)['count(*)']
