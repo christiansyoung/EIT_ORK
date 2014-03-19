@@ -260,9 +260,10 @@ def weather_data():
 @app.route('/configuration', methods=['GET', 'POST'])
 @login_required
 def configuration():
+    form = ConfigForm()
+    db = get_db()
+
     if request.method == 'POST':
-        db = get_db()
-        form = ConfigForm()
         if form.validate_on_submit():
             window_width = form.window_width.data
             window_height = form.window_height.data
@@ -272,17 +273,13 @@ def configuration():
             window_hinge = form.window_hinge.data
             db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
             db.commit()
-            flash_text = 'Configuration updated'
-            flash(flash_text, 'success')
+            flash('Configuration updated', 'success')
         else:
-            flash_text='Invalid input'
-            flash(flash_text, 'danger')
-    db = get_db()
+            flash('Invalid input', 'danger')
+
     config = query_db('SELECT * FROM configuration WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if config is None:
-        flash_text='No configuration set'
-        flash(flash_text, 'danger')
-        form = ConfigForm()
+        flash('No configuration set', 'danger')
         return render_template('configuration.html', form=form)
     else:
         window_width_db = config['width']
@@ -291,8 +288,8 @@ def configuration():
         window_hinge_db = config['hinge']
         window_direction_db = config['angle']
         room_draft_db = config['draftthreshold']
-        form = ConfigForm()
-        return render_template('configuration.html', form = form)
+    
+    return render_template('configuration.html', form=form)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
