@@ -1,16 +1,24 @@
 import os
 import sqlite3
+import datetime
+
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
+from flask.ext.login import LoginManager, login_required, login_user, logout_user
+
+from forms import LoginForm
 from utils import ReverseProxied
 from config_form import ConfigForm
-import datetime
+from models import User
 
 # ID on the active window from the database
 ACTIVE_WINDOW = 1
 
 app = Flask('webservice')
 app.config.from_object('config')
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
@@ -19,8 +27,14 @@ app.config.update(dict(
     DEBUG=True,
     #USERNAME='admin',
     #PASSWORD='default'
+    SECRET_KEY='development key',
+    USERNAME='root',
+    PASSWORD='root'
 ))
+
+WTF_CSRF_SECRET_KEY = app.config['SECRET_KEY']
 app.config.from_envvar('FLASK_SETTINGS', silent=True)
+
 
 def connect_db():
     """Connects to the specific database."""
@@ -77,41 +91,89 @@ def get_latest_sensor_data():
     }
 
 
-@app.route('/', methods=['POST','GET'])
+@login_manager.user_loader
+def load_user(userid):
+    return User.get(userid)
+
+
+@app.route('/', methods=['GET'])
+@login_required
 def index():
-    db = get_db()
-
-    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
+    state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
     # If this is a timer call
-    if request.method == 'POST':
-        # POST parameters to variables
-        hours = request.form['hours']
-        minutes = request.form['minutes']
-        timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
-        # Make a new timer object
-        db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
-        db.commit()
+    time = None
+    if state['timestamp']:
+        # converting timestamp to HH:MM
+        time = state['timestamp'].split()[1].split(".")[0]
+    return render_template('status.html', state=state, time=time, **get_latest_sensor_data())
 
-        # Get the object we just created
-        timer = query_db('SELECT id FROM timer order by id DESC', one=True)
 
-        # If that does not exist, something is wrong
-        if timer is None:
-            flash('Something went wrong', 'danger')
-            return render_template('status.html', state=state, **get_latest_sensor_data())
+@app.route('/api/set-timer/', methods=['POST'])
+@login_required
+def set_timer():
+    state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
-        # Set the timer in the state
-        timer_id = timer['id']
-        db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
-        db.commit()
+    db = get_db()
+    # POST parameters to variables
+    hours = request.form['hours']
+    minutes = request.form['minutes']
+    timestamp = datetime.datetime.today()+datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
+    # Make a new timer object
+    db.execute('INSERT INTO timer (window_id, timestamp) VALUES (?,?)', [ACTIVE_WINDOW, timestamp])
+    db.commit()
+
+    # Get the object we just created
+    timer = query_db('SELECT id FROM timer order by id DESC', one=True)
+
+    # If that does not exist, something is wrong
+    if timer is None:
+        flash('Something went wrong', 'danger')
+        return render_template('status.html', state=state, **get_latest_sensor_data())
+
+    # Set the timer in the state
+    timer_id = timer['id']
+    db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [timer_id, ACTIVE_WINDOW])
+    db.commit()
+
+    try:
+        if not state['open']:
+            open_window()
         flash('The timer was set.', 'success')
+    except Exception as e:
+        flash(e.message, "danger")
 
-    return render_template('status.html', state=state, **get_latest_sensor_data())
+    return redirect(url_for('index'))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if not request.form['password'] == app.config['PASSWORD'] or not request.form['name'] == app.config['USERNAME']:
+                flash('Wrong username or password', 'danger')
+            else:
+                user = User()
+                login_user(user)
+                flash('You are now logged in!', 'success')
+                return redirect(request.args.get("next") or url_for("index"))
+        else:
+            flash('CSRF validation failed.', 'danger')
+    return render_template("login.html", form=form)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash('You are now logged out.', 'success')
+    return redirect(url_for('login'))
 
 
 @app.route('/api/mode/<mode>')
+@login_required
 def mode(mode):
     db = get_db()
 
@@ -135,9 +197,27 @@ def mode(mode):
     return redirect(url_for('index'))
 
 
-@app.route('/api/open-close/')
-def open_close():
+def open_window():
+    code = os.system('python window_motor.py open')
+    if code != 0:
+        raise Exception('Your window could not be opened. (%s)' % code)
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [True, ACTIVE_WINDOW])
+    db.commit()
 
+
+def close_window():
+    code = os.system('python window_motor.py close')
+    if code != 0:
+        raise Exception('Your window could not be closed. (%s)' % code)
+    db = get_db()
+    db.execute('UPDATE state SET open=? WHERE window_id=?', [False, ACTIVE_WINDOW])
+    db.commit()
+
+
+@app.route('/api/open-close/')
+@login_required
+def open_close():
     # Get the state and check whether the window is open or closed
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
     if state is None:
@@ -145,39 +225,31 @@ def open_close():
         return render_template('status.html', alert='danger')
 
     # If it is now closed, open it.
-    if not state['open']:
-        window_open = True
-        flash_text = 'Your window is now open.'
-        code = os.system('python window_motor.py open')
-        if code != 0:
-            flash_text = 'Your window could not be open. (%s)' % code
-            flash(flash_text, 'danger')
-            return redirect(url_for('index'))
-    else:
-        window_open = False
-        flash_text = 'Your window is now closed.'
-        code = os.system('python window_motor.py close')
-        if code != 0:
-            flash_text = 'Your window could not be closed. (%s)' % code
-            flash(flash_text, 'danger')
-            return redirect(url_for('index'))
 
-
-    db = get_db()
-    db.execute('UPDATE state SET open=? WHERE window_id=?', [window_open, ACTIVE_WINDOW])
-    db.commit()
-
-    # OPEN WINDOW WITH MOTOR HERE
-
-    flash(flash_text, 'success')
+    try:
+        if not state['open']:
+            open_window()
+            flash_text = 'Your window is now open.'
+        else:
+            close_window()
+            flash_text = 'Your window is now closed.'
+        flash(flash_text, 'success')
+    except Exception as e:
+        flash(e.message, "danger")
     return redirect(url_for('index'))
 
 
+MAX_SENSORDATA_ROWS = 100
 @app.route('/api/weather_sensor_data', methods=['POST'])
 def post_sensor_data():
     weather = request.get_json()
 
     db = get_db()
+    count = query_db("select count(*) from sensordata", one=True)['count(*)']
+    # delete rows in sensordata table if row count exceeds MAX_SENSORDATA_ROWS
+    if count >= MAX_SENSORDATA_ROWS:
+        db.execute("DELETE FROM sensordata WHERE timestamp IN "
+                   "(SELECT timestamp FROM sensordata ORDER BY timestamp LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
     db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
                'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
     db.commit()
@@ -191,6 +263,7 @@ def weather_data():
 
 
 @app.route('/configuration', methods=['GET', 'POST'])
+@login_required
 def configuration():
     if request.method == 'POST':
         db = get_db()
@@ -231,4 +304,4 @@ def configuration():
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=app.config['DEBUG'])
