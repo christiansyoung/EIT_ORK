@@ -246,7 +246,13 @@ def post_sensor_data():
         db.execute("DELETE FROM sensordata WHERE timestamp IN "
                    "(SELECT timestamp FROM sensordata ORDER BY timestamp LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
     db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
-               'VALUES (?,?,?,?,?,?)', [ACTIVE_WINDOW, weather['wind']['angle'], weather['wind']['speed'], weather['temp'], weather['pressure'], weather['humidity']])
+               'VALUES (?,?,?,?,?,?)',[
+               ACTIVE_WINDOW, 
+               weather['wind']['angle'], 
+               weather['wind']['speed'], 
+               weather['temp'], 
+               weather['pressure'], 
+               weather['humidity']])
     db.commit()
 
     return jsonify({'ok': True})
@@ -265,13 +271,14 @@ def configuration():
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            window_width = form.window_width.data
-            window_height = form.window_height.data
-            room_area = form.area.data
-            window_direction = form.window_direction.data
-            room_draft = form.draft.data
-            window_hinge = form.window_hinge.data
-            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[window_width, window_height, room_area, window_hinge, window_direction, room_draft, ACTIVE_WINDOW])
+            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[
+                form.window_width.data, 
+                form.window_height.data, 
+                form.area.data, 
+                form.window_hinge.data, 
+                form.window_direction.data, 
+                form.draft.data, 
+                ACTIVE_WINDOW])
             db.commit()
             flash('Configuration updated', 'success')
         else:
@@ -281,16 +288,15 @@ def configuration():
     if config is None:
         flash('No configuration set', 'danger')
         return render_template('configuration.html', form=form)
-    else:
-        window_width_db = config['width']
-        window_height_db = config['height']
-        room_area_db = config['area']
-        window_hinge_db = config['hinge']
-        window_direction_db = config['angle']
-        room_draft_db = config['draftthreshold']
 
-        form = ConfigForm(window_width=window_width_db, window_height=window_height_db, area=room_area_db, window_direction=window_direction_db, draft=room_draft_db, window_hinge=window_hinge_db)
-        return render_template('configuration.html', form = form)
+    form = ConfigForm(
+        window_width=config['width'], 
+        window_height=config['height'], 
+        area=config['area'], 
+        window_direction=config['angle'], 
+        draft=config['draftthreshold'], 
+        window_hinge=config['hinge'])
+    return render_template('configuration.html', form = form)
 
 
 app.wsgi_app = ReverseProxied(app.wsgi_app)
