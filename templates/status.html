@@ -35,10 +35,10 @@
 			<div class="col-xs-12 clearfix">
 				{% if state.open %}
 					<p class="lead pull-left">Your window is open{% if time %} (will close <b>{{time}}</b>) {% endif %}.</p>
-					<a href="/api/open-close/" class="btn btn-danger pull-right">Close</a>
+					<a href="/api/open-close/" class="btn btn-primary pull-right closes">Close</a>
 				{% else %}
 					<p class="lead pull-left">Your window is closed.</p>
-					<a href="/api/open-close" class="btn btn-success pull-right">Open</a>
+					<a href="/api/open-close" class="btn btn-primary pull-right opens">Open</a>
 				{% endif %}
 			</div>
 		</div>
@@ -68,7 +68,7 @@
 			</div>
 			<div class="row">
 				<div class="col-md-12">
-					<input type="submit" class="btn btn-primary" value="Set timer {% if not state.open %} and open window {% endif %}" />
+					<button type="submit" class="btn btn-primary {% if not state.open %}opens{% endif %}">Set timer {% if not state.open %} and open window {% endif %}</button>
 				</div>
 			</div>
 		</form>
@@ -110,9 +110,18 @@
 		        option.appendChild(document.createTextNode(m + ' minutes'));
 				$('#minutes').append(option);
 			}
+
+			$('.opens').click(function(e){
+               $(e.target).html('Opening...');
+            });
+
+            $('.closes').click(function(e){
+               $(e.target).html('Closing...');
+            });
+
 		});
         setInterval(function() {
-            $.getJSON("http://127.0.0.1:5000/api/weather_data").done(function(windData){
+            $.getJSON("http://{{SERVICE_URL}}/api/weather_data").done(function(windData){
                 $("#temp").html(windData.temp);
                 $("#humidity").html(windData.humidity);
                 $("#wind-speed").html(windData.wind.speed);

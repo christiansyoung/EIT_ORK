@@ -9,6 +9,7 @@ from flask.ext.login import LoginManager, login_required, login_user, logout_use
 from forms import LoginForm, ConfigForm
 from utils import ReverseProxied
 from models import User
+from config import SERVICE_URL
 
 import formulas
 
@@ -25,8 +26,7 @@ login_manager.login_view = "login"
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'database.db'),
-    CSRF_ENABLED = True,
-    DEBUG=True
+    CSRF_ENABLED = True
 ))
 
 WTF_CSRF_SECRET_KEY = app.config['SECRET_KEY']
@@ -97,13 +97,13 @@ def load_user(userid):
 @login_required
 def index():
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
-    # If this is a timer call
 
+    # If this is a timer call
     time = None
     if state['timestamp']:
         # converting timestamp to HH:MM
         time = state['timestamp'].split()[1].split(".")[0]
-    return render_template('status.html', state=state, time=time, **get_latest_sensor_data())
+    return render_template('status.html', SERVICE_URL=SERVICE_URL, state=state, time=time, **get_latest_sensor_data())
 
 
 @app.route('/api/set-timer/', methods=['POST'])
@@ -221,10 +221,14 @@ def open_close():
         flash('Serious error', 'danger')
         return render_template('status.html', alert='danger')
 
-    # If it is now closed, open it.
-
     try:
         if not state['open']:
+            weather = get_latest_sensor_data()
+            # Dry run the close if needed method to check if it is dangerous to open based on latest sensor data
+            if close_window_if_needed(weather, True):
+                flash('Cannot open your window. It will break if I do. (Override this in manual)', 'danger')
+                return redirect(url_for('index'))
+
             open_window()
             flash_text = 'Your window is now open.'
         else:
@@ -235,7 +239,7 @@ def open_close():
         flash(e.message, "danger")
     return redirect(url_for('index'))
 
-def close_window_if_needed(weather):
+def close_window_if_needed(weather, dry_run=False):
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
 
     if not state['open']:
@@ -252,8 +256,19 @@ def close_window_if_needed(weather):
         motor_torsion=config['enginepower'],
         left_hinge=config['hinge'] == 1
     )
+
     if formulas.must_close_window(**args) or formulas.room_wind_speed(**args) > config['draftthreshold']:
-        close_window()
+        # If this is a dry run, don't actually close, but return true
+        if dry_run:
+            return True
+        else:    
+            close_window()
+
+    # Return false if the formulas didn't trigger on dry run
+    if dry_run:
+        return False
+
+    # Close window if the timer has expired
     if state['timestamp']:
         if datetime.datetime.strptime(state['timestamp'], "%Y-%m-%d %H:%M:%S.%f") < datetime.datetime.now():
             close_window()

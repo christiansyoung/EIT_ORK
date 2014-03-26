@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 
 
 delay = 0.0050
-steps = 500
+steps = 250
 
 # Enable pins for IN1-4 to control step sequence
 coil_A_1_pin = 23
