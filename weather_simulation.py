@@ -13,10 +13,10 @@ class Weather:
         self.wind = dict(speed=10, angle=210)
 
     def simulate_weather(self):
-        self.temp = min(max(self.temp + randint(-2, 2), -30), 30)
-        self.humidity = min(max(self.humidity + randint(-2, 2), 70), 90)
-        self.wind['angle'] = (self.wind['angle'] + randint(-2, 2)) % 360
-        self.wind['speed'] = min(max(self.wind['speed'] + randint(-2, 2), 0), 40)
+        self.temp = min(max(self.temp + randint(-1, 1), -30), 30)
+        self.humidity = min(max(self.humidity + randint(-1, 1), 70), 90)
+        self.wind['angle'] = (self.wind['angle'] + randint(-1, 1)) % 360
+        self.wind['speed'] = min(max(self.wind['speed'] + randint(-1, 1), 0), 20)
 
 
 w = Weather()
