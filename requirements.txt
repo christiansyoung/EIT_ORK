@@ -3,10 +3,12 @@ Flask-Login==0.2.10
 Flask-WTF==0.9.4
 Jinja2==2.7.2
 MarkupSafe==0.18
+RPi.GPIO==0.5.4
 WTForm==1.0
 WTForms==1.0.5
 Werkzeug==0.9.4
 argparse==1.2.1
+distribute==0.6.24
 gunicorn==18.0
 itsdangerous==0.23
 wsgiref==0.1.2
