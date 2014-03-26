@@ -262,8 +262,11 @@ def close_window_if_needed(weather, dry_run=False):
         # If this is a dry run, don't actually close, but return true
         if dry_run:
             return True
-        else:    
-            close_window()
+        else:
+            try:
+                close_window()
+            except Exception:
+                pass
 
     # Return false if the formulas didn't trigger on dry run
     if dry_run:
@@ -272,7 +275,10 @@ def close_window_if_needed(weather, dry_run=False):
     # Close window if the timer has expired
     if state['timestamp']:
         if datetime.datetime.strptime(state['timestamp'], "%Y-%m-%d %H:%M:%S.%f") < datetime.datetime.now():
-            close_window()
+            try:
+                close_window()
+            except Exception:
+                pass
             db = get_db()
             db.execute("UPDATE state SET timer_id=NULL where window_id=?;",[ACTIVE_WINDOW])
             db.commit()
