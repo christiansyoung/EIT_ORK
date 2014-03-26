@@ -97,8 +97,8 @@ def load_user(userid):
 @login_required
 def index():
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
-    # If this is a timer call
 
+    # If this is a timer call
     time = None
     if state['timestamp']:
         # converting timestamp to HH:MM
