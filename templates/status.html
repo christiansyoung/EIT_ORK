@@ -120,10 +120,12 @@
 
             $('.opens').click(function(e){
                $(e.target).html('Opening...');
+               $(e.target).attr('disabled', true);
             });
 
             $('.closes').click(function(e){
                $(e.target).html('Closing...');
+               $(e.target).attr('disabled', true);
             });
 
         });
