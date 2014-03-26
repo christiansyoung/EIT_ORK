@@ -18,7 +18,7 @@ wind_speed INT,
 temperature INT,
 preasure INT,
 humidity INT,
-timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE window (
