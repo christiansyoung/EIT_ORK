@@ -223,8 +223,8 @@ def open_close():
         return render_template('status.html', alert='danger')
 
     try:
-        if state['auto']:
-            if not state['open']:
+        if not state['open']:
+            if state['auto']:
                 weather = get_latest_sensor_data()
                 # Dry run the close if needed method to check if it is dangerous to open based on latest sensor data
                 if close_window_if_needed(weather, True):
