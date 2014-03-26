@@ -52,5 +52,5 @@ python windy_weather.py
 
 ####Troubleshooting
 
-- gunicorn process log: (tail -f / less) /var/log/supervisor/webservice-stdout<HASH>.log
+- gunicorn process log: (tail -f / less) /var/log/supervisor/webservice-stdout/\HASH/\>.log
 - restart nginx: service nginx restart
