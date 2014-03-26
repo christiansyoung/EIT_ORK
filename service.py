@@ -223,12 +223,13 @@ def open_close():
         return render_template('status.html', alert='danger')
 
     try:
-        if not state['open']:
-            weather = get_latest_sensor_data()
-            # Dry run the close if needed method to check if it is dangerous to open based on latest sensor data
-            if close_window_if_needed(weather, True):
-                flash('Cannot open your window. It will break if I do. (Override this in manual)', 'danger')
-                return redirect(url_for('index'))
+        if state['auto']:
+            if not state['open']:
+                weather = get_latest_sensor_data()
+                # Dry run the close if needed method to check if it is dangerous to open based on latest sensor data
+                if close_window_if_needed(weather, True):
+                    flash('Cannot open your window. It will break if I do. (Override this in manual)', 'danger')
+                    return redirect(url_for('index'))
 
             open_window()
             flash_text = 'Your window is now open.'
