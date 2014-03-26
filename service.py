@@ -9,6 +9,7 @@ from flask.ext.login import LoginManager, login_required, login_user, logout_use
 from forms import LoginForm, ConfigForm
 from utils import ReverseProxied
 from models import User
+from config import SERVICE_URL
 
 import formulas
 
@@ -103,7 +104,7 @@ def index():
     if state['timestamp']:
         # converting timestamp to HH:MM
         time = state['timestamp'].split()[1].split(".")[0]
-    return render_template('status.html', state=state, time=time, **get_latest_sensor_data())
+    return render_template('status.html', SERVICE_URL=SERVICE_URL, state=state, time=time, **get_latest_sensor_data())
 
 
 @app.route('/api/set-timer/', methods=['POST'])
