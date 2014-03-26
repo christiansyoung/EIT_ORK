@@ -112,7 +112,7 @@
 			}
 		});
         setInterval(function() {
-            $.getJSON("http://127.0.0.1:5000/api/weather_data").done(function(windData){
+            $.getJSON("http://{{SERVICE_URL}}/api/weather_data").done(function(windData){
                 $("#temp").html(windData.temp);
                 $("#humidity").html(windData.humidity);
                 $("#wind-speed").html(windData.wind.speed);
