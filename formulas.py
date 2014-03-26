@@ -14,7 +14,7 @@ def air_pressure(wind_speed, window_width, window_height, wind_direction, window
     return v*b*h*(cos(theta)*sin(alpha) + sin(theta)*(1-sin(alpha)))
 
 
-def must_close_window(wind_speed, width, height, wind_direction, window_angle, window_opening_angle, motor_torsion, arm, left_hinge):
+def must_close_window(wind_speed, width, height, wind_direction, window_angle, window_opening_angle, motor_torsion, left_hinge):
     v = wind_speed
     b = width
     h = height
@@ -23,6 +23,7 @@ def must_close_window(wind_speed, width, height, wind_direction, window_angle, w
     T = motor_torsion
     yn = 1.5
     p = 1.25
+    arm = 0.5
 
     Fm = T*g/(arm*yn)
 
@@ -32,8 +33,8 @@ def must_close_window(wind_speed, width, height, wind_direction, window_angle, w
         return 0.7*v > sqrt(Fm/(2.5*p*b*h))
 
 
-def room_wind_speed(wind_speed, window_width, window_height, wind_direction, window_angle, window_opening_angle, left_hinge):
-    y = air_pressure(wind_speed, window_width, window_height, wind_direction, window_angle, window_opening_angle, left_hinge)
+def room_wind_speed(wind_speed, width, height, wind_direction, window_angle, window_opening_angle, motor_torsion, left_hinge):
+    y = air_pressure(wind_speed, width, height, wind_direction, window_angle, window_opening_angle, left_hinge)
     A = 9
     hr = 2.4
     gamma = 3
