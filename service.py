@@ -26,7 +26,8 @@ login_manager.login_view = "login"
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'database.db'),
-    CSRF_ENABLED = True
+    CSRF_ENABLED = True,
+    DEBUG=True
 ))
 
 WTF_CSRF_SECRET_KEY = app.config['SECRET_KEY']
@@ -316,13 +317,14 @@ def configuration():
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=? WHERE window_id=?',[
+            db.execute('UPDATE configuration SET width=?, height=?, area=?, hinge=?, angle=?, draftthreshold=?, enginepower=? WHERE window_id=?',[
                 form.window_width.data, 
                 form.window_height.data, 
                 form.area.data, 
                 form.window_hinge.data, 
                 form.window_direction.data, 
-                form.draft.data, 
+                form.draft.data,
+                form.enginepower.data,
                 ACTIVE_WINDOW])
             db.commit()
             flash('Configuration updated', 'success')
@@ -340,7 +342,8 @@ def configuration():
         area=config['area'], 
         window_direction=config['angle'], 
         draft=config['draftthreshold'], 
-        window_hinge=config['hinge'])
+        window_hinge=config['hinge'],
+        enginepower=config['enginepower'])
     return render_template('configuration.html', form = form)
 
 
