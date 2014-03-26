@@ -110,6 +110,14 @@ def index():
 @app.route('/api/set-timer/', methods=['POST'])
 @login_required
 def set_timer():
+    # If automode, check if it is okay to open the window.
+    if state['auto']:
+        weather = get_latest_sensor_data()
+        # Dry run the close if needed method to check if it is dangerous to open based on latest sensor data
+        if close_window_if_needed(weather, True):
+            flash('Cannot open your window. It will break if I do. (Override this in manual)', 'danger')
+            return redirect(url_for('index'))
+
     state = query_db('SELECT * from state WHERE window_id=?', [ACTIVE_WINDOW], one=True)
 
     db = get_db()
@@ -210,6 +218,7 @@ def close_window():
         raise Exception('Your window could not be closed. (%s)' % code)
     db = get_db()
     db.execute('UPDATE state SET open=? WHERE window_id=?', [False, ACTIVE_WINDOW])
+    db.execute('UPDATE state SET timer_id=? WHERE window_id=?', [0, ACTIVE_WINDOW])
     db.commit()
 
 
