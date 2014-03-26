@@ -243,7 +243,7 @@ def open_close():
 def close_window_if_needed(weather, dry_run=False):
     state = query_db('select * from state s LEFT JOIN timer on timer_id = id WHERE s.window_id=?', [ACTIVE_WINDOW], one=True)
 
-    if not state['open']:
+    if not state['open'] and not dry_run:
         return
 
     config = query_db("select * from configuration where window_id=?", [ACTIVE_WINDOW], one=True)
