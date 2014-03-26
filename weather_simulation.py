@@ -2,6 +2,7 @@ import threading
 from random import randint
 import os
 import json
+from config import SERVICE_URL
 
 
 class Weather:
@@ -22,7 +23,7 @@ w = Weather()
 
 def send_data():
     w.simulate_weather()
-    os.system('curl -X POST -H "Content-Type: application/json" -d \'{}\' http://localhost:5000/api/weather_sensor_data'.format(json.dumps(w.__dict__)))
+    os.system('curl -X POST -H "Content-Type: application/json" -d \'{}\' http://%s/api/weather_sensor_data'.format(json.dumps(w.__dict__))) % SERVICE_URL
     threading.Timer(5, send_data).start()
 
 send_data()
