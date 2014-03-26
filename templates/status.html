@@ -35,10 +35,10 @@
 			<div class="col-xs-12 clearfix">
 				{% if state.open %}
 					<p class="lead pull-left">Your window is open{% if time %} (will close <b>{{time}}</b>) {% endif %}.</p>
-					<a href="/api/open-close/" class="btn btn-danger pull-right closes">Close</a>
+					<a href="/api/open-close/" class="btn btn-primary pull-right closes">Close</a>
 				{% else %}
 					<p class="lead pull-left">Your window is closed.</p>
-					<a href="/api/open-close" class="btn btn-success pull-right opens">Open</a>
+					<a href="/api/open-close" class="btn btn-primary pull-right opens">Open</a>
 				{% endif %}
 			</div>
 		</div>
