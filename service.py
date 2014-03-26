@@ -75,7 +75,7 @@ def query_db(query, args=(), one=False):
 
 
 def get_latest_sensor_data():
-    row = query_db("select * from sensordata order by timestamp desc limit 1;", one=True)
+    row = query_db("select * from sensordata order by id desc limit 1;", one=True)
 
     return {
         u'pressure': row['preasure'],
@@ -296,7 +296,7 @@ def post_sensor_data():
     # delete rows in sensordata table if row count exceeds MAX_SENSORDATA_ROWS
     if count >= MAX_SENSORDATA_ROWS:
         db.execute("DELETE FROM sensordata WHERE timestamp IN "
-                   "(SELECT timestamp FROM sensordata ORDER BY timestamp LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
+                   "(SELECT timestamp FROM sensordata ORDER BY id ASC LIMIT ?);", [count-MAX_SENSORDATA_ROWS+1])
     db.execute('INSERT INTO sensordata (window_id, wind_angle, wind_speed, temperature, preasure, humidity) '
                'VALUES (?,?,?,?,?,?)',[
                    ACTIVE_WINDOW, 

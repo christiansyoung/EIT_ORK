@@ -11,6 +11,7 @@ draftthreshold INT NOT NULL);
 
 
 CREATE TABLE sensordata (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
 window_id INT NOT NULL,
 wind_angle INT,
 wind_speed INT,
@@ -18,7 +19,6 @@ temperature INT,
 preasure INT,
 humidity INT,
 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (window_id, timestamp)
 );
 
 CREATE TABLE window (
